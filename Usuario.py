@@ -12,7 +12,7 @@ class PerfilEnum(str, enum.Enum):
 
 
 class Usuario(Base):
-    __tablename__ = "usuarios"  # nome da tabela no MySQL
+    __tablename__ = "usuarios"
 
     # Colunas da tabela
     id = Column(Integer, primary_key=True, index=True)

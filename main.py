@@ -3,9 +3,12 @@
 import os
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
+from banco import obter_sessao
 from rotas import auth, candidatos, empresas, admin
 
 load_dotenv()
@@ -37,3 +40,11 @@ app.include_router(admin.roteador)
 @app.get("/")
 def raiz():
     return {"mensagem": "API CadaUm funcionando!", "versao": "1.0.0"}
+
+
+@app.get("/saude")
+def saude(sessao: Session = Depends(obter_sessao)):
+    """Endpoint pra ping externo (cron-job.org/UptimeRobot): toca o banco pra
+    evitar que o Render durma e o Supabase pause o projeto por inatividade."""
+    sessao.execute(text("SELECT 1"))
+    return {"status": "ok"}

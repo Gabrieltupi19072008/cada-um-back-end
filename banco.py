@@ -6,15 +6,11 @@ import os
 
 load_dotenv()
 
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "3306")
-DB_NOME = os.getenv("DB_NOME", "conectatea")
-DB_USUARIO = os.getenv("DB_USUARIO", "root")
-DB_SENHA = os.getenv("DB_SENHA", "")
+# URL completa de conexão (Postgres/Supabase). Copie do painel do Supabase em
+# Project Settings > Database > Connection string (modo "Transaction pooler").
+URL_BANCO = os.getenv("DATABASE_URL", "postgresql+pg8000://postgres:postgres@localhost:5432/conectatea")
 
-URL_BANCO = f"mysql+pymysql://{DB_USUARIO}:{DB_SENHA}@{DB_HOST}:{DB_PORT}/{DB_NOME}?charset=utf8mb4"
-
-engine = create_engine(URL_BANCO, echo=False)
+engine = create_engine(URL_BANCO, echo=False, pool_pre_ping=True)
 SessaoLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
