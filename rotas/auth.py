@@ -28,9 +28,20 @@ def _verificar_email_disponivel(email: str, sessao: Session):
         )
 
 
+def _validar_senha(senha: str):
+    tem_letra = any(c.isalpha() for c in senha)
+    tem_numero = any(c.isdigit() for c in senha)
+    if len(senha) < 8 or not tem_letra or not tem_numero:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="A senha precisa ter pelo menos 8 caracteres, com letras e números",
+        )
+
+
 @roteador.post("/cadastro/candidato", status_code=status.HTTP_201_CREATED)
 def cadastrar_candidato(dados: CandidatoCadastro, sessao: Session = Depends(obter_sessao)):
     _verificar_email_disponivel(dados.email, sessao)
+    _validar_senha(dados.senha)
 
     usuario = Usuario(
         nome=dados.nome,
@@ -58,6 +69,7 @@ def cadastrar_candidato(dados: CandidatoCadastro, sessao: Session = Depends(obte
 @roteador.post("/cadastro/empresa", status_code=status.HTTP_201_CREATED)
 def cadastrar_empresa(dados: EmpresaCadastro, sessao: Session = Depends(obter_sessao)):
     _verificar_email_disponivel(dados.email, sessao)
+    _validar_senha(dados.senha)
 
     usuario = Usuario(
         nome=dados.nome,
