@@ -221,6 +221,19 @@ def listar_meus_interesses(
     return sessao.query(Interesse).filter(Interesse.empresa_id == empresa.id).all()
 
 
+@roteador.get("/me/candidaturas", response_model=list[InteresseResposta])
+def listar_candidaturas_recebidas(
+    usuario: Usuario = Depends(exigir_empresa),
+    sessao: Session = Depends(obter_sessao),
+):
+    empresa = _obter_empresa_do_usuario(usuario, sessao)
+    return (
+        sessao.query(Interesse)
+        .filter(Interesse.empresa_id == empresa.id, Interesse.origem == "candidato")
+        .all()
+    )
+
+
 @roteador.get("/me/cota", response_model=CotaResposta)
 def obter_minha_cota(
     usuario: Usuario = Depends(exigir_empresa),
