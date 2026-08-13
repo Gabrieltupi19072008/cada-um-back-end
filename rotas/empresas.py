@@ -142,7 +142,9 @@ def buscar_candidatos(
     empresa = _obter_empresa_do_usuario(usuario, sessao)
     _exigir_empresa_aprovada(empresa)
 
-    consulta = sessao.query(Candidato).filter(Candidato.aprovado.is_(True))
+    consulta = sessao.query(Candidato).filter(
+        Candidato.aprovado.is_(True), Candidato.visivel_para_empresas.is_(True)
+    )
     if cidade:
         consulta = consulta.filter(Candidato.cidade == cidade)
     if estado:
@@ -168,7 +170,11 @@ def obter_candidato(
 
     candidato = (
         sessao.query(Candidato)
-        .filter(Candidato.id == candidato_id, Candidato.aprovado.is_(True))
+        .filter(
+            Candidato.id == candidato_id,
+            Candidato.aprovado.is_(True),
+            Candidato.visivel_para_empresas.is_(True),
+        )
         .first()
     )
     if candidato is None:
