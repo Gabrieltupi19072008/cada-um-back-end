@@ -1,7 +1,7 @@
 # schemas.py - Modelos Pydantic usados nas rotas (entrada e saída de dados)
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Literal
 from datetime import date, datetime
 
 from Candidato import GrauTeaEnum
@@ -66,6 +66,21 @@ class CandidatoAtualizar(BaseModel):
     grau_tea: Optional[GrauTeaEnum] = None
     necessidades_especiais: Optional[str] = None
     foto_url: Optional[str] = None
+    escolaridade: Optional[
+        Literal[
+            "fundamental_incompleto",
+            "fundamental_completo",
+            "medio_incompleto",
+            "medio_completo",
+            "superior_incompleto",
+            "superior_completo",
+            "pos_graduacao",
+        ]
+    ] = None
+    cursos_profissionalizantes: Optional[str] = None
+    bairros_aceitos: Optional[str] = None
+    tipos_vinculo: Optional[str] = None
+    visivel_para_empresas: Optional[bool] = None
 
 
 class FormacaoCriar(BaseModel):
@@ -136,6 +151,11 @@ class CandidatoPerfil(BaseModel):
     grau_tea: Optional[GrauTeaEnum] = None
     necessidades_especiais: Optional[str] = None
     foto_url: Optional[str] = None
+    escolaridade: Optional[str] = None
+    cursos_profissionalizantes: Optional[str] = None
+    bairros_aceitos: Optional[str] = None
+    tipos_vinculo: Optional[str] = None
+    visivel_para_empresas: bool = True
     formacoes: list[FormacaoResposta] = []
     experiencias: list[ExperienciaResposta] = []
     habilidades: list[HabilidadeResposta] = []
@@ -155,6 +175,11 @@ class CandidatoPublico(BaseModel):
     grau_tea: Optional[GrauTeaEnum] = None
     necessidades_especiais: Optional[str] = None
     foto_url: Optional[str] = None
+    escolaridade: Optional[str] = None
+    cursos_profissionalizantes: Optional[str] = None
+    bairros_aceitos: Optional[str] = None
+    tipos_vinculo: Optional[str] = None
+    visivel_para_empresas: bool = True
     formacoes: list[FormacaoResposta] = []
     experiencias: list[ExperienciaResposta] = []
     habilidades: list[HabilidadeResposta] = []
@@ -298,6 +323,7 @@ class CandidatoAdmin(BaseModel):
     cidade: Optional[str] = None
     estado: Optional[str] = None
     grau_tea: Optional[GrauTeaEnum] = None
+    visivel_para_empresas: bool = True
     aprovado: bool
     criado_em: datetime
 
