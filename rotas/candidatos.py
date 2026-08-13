@@ -26,6 +26,7 @@ from schemas import (
     HabilidadeResposta,
     InteresseParaCandidato,
     InteresseResponder,
+    InteresseResposta,
     VagaComEmpresa,
 )
 
@@ -282,3 +283,40 @@ def listar_vagas_disponiveis(
         consulta = consulta.filter(Vaga.modalidade == modalidade)
 
     return consulta.all()
+
+
+@roteador.post("/vagas/{vaga_id}/candidatar", response_model=InteresseResposta, status_code=status.HTTP_201_CREATED)
+def candidatar_se_a_vaga(
+    vaga_id: int,
+    usuario: Usuario = Depends(exigir_candidato),
+    sessao: Session = Depends(obter_sessao),
+):
+    candidato = _obter_candidato_do_usuario(usuario, sessao)
+
+    vaga = (
+        sessao.query(Vaga)
+        .join(Vaga.empresa)
+        .filter(Vaga.id == vaga_id, Vaga.ativa.is_(True), Empresa.aprovada.is_(True))
+        .first()
+    )
+    if vaga is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vaga não encontrada")
+
+    ja_candidatou = (
+        sessao.query(Interesse)
+        .filter(Interesse.vaga_id == vaga_id, Interesse.candidato_id == candidato.id)
+        .first()
+    )
+    if ja_candidatou is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Você já se candidatou a esta vaga")
+
+    interesse = Interesse(
+        empresa_id=vaga.empresa_id,
+        candidato_id=candidato.id,
+        vaga_id=vaga.id,
+        origem="candidato",
+    )
+    sessao.add(interesse)
+    sessao.commit()
+    sessao.refresh(interesse)
+    return interesse
