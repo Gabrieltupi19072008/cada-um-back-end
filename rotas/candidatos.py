@@ -11,7 +11,7 @@ from Candidato import Candidato
 from Formacao import Formacao
 from Experiencia import Experiencia
 from Habilidade import Habilidade
-from Interesses import Interesse, StatusInteresseEnum
+from Interesses import Interesse, StatusInteresseEnum, OrigemInteresseEnum
 from Vaga import Vaga, ModalidadeEnum
 from Empresa import Empresa
 from dependencias import exigir_candidato
@@ -220,7 +220,11 @@ def listar_meus_interesses(
     sessao: Session = Depends(obter_sessao),
 ):
     candidato = _obter_candidato_do_usuario(usuario, sessao)
-    interesses = sessao.query(Interesse).filter(Interesse.candidato_id == candidato.id).all()
+    interesses = (
+        sessao.query(Interesse)
+        .filter(Interesse.candidato_id == candidato.id, Interesse.origem == OrigemInteresseEnum.empresa)
+        .all()
+    )
 
     # Marca como "visualizado" os interesses que ainda estavam pendentes
     houve_alteracao = False
@@ -244,7 +248,11 @@ def responder_interesse(
     candidato = _obter_candidato_do_usuario(usuario, sessao)
     interesse = (
         sessao.query(Interesse)
-        .filter(Interesse.id == interesse_id, Interesse.candidato_id == candidato.id)
+        .filter(
+            Interesse.id == interesse_id,
+            Interesse.candidato_id == candidato.id,
+            Interesse.origem == OrigemInteresseEnum.empresa,
+        )
         .first()
     )
     if interesse is None:
@@ -304,7 +312,11 @@ def candidatar_se_a_vaga(
 
     ja_candidatou = (
         sessao.query(Interesse)
-        .filter(Interesse.vaga_id == vaga_id, Interesse.candidato_id == candidato.id)
+        .filter(
+            Interesse.vaga_id == vaga_id,
+            Interesse.candidato_id == candidato.id,
+            Interesse.origem == OrigemInteresseEnum.candidato,
+        )
         .first()
     )
     if ja_candidatou is not None:
@@ -314,7 +326,7 @@ def candidatar_se_a_vaga(
         empresa_id=vaga.empresa_id,
         candidato_id=candidato.id,
         vaga_id=vaga.id,
-        origem="candidato",
+        origem=OrigemInteresseEnum.candidato,
     )
     sessao.add(interesse)
     sessao.commit()

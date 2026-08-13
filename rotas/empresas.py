@@ -12,7 +12,7 @@ from Candidato import Candidato, GrauTeaEnum
 from Experiencia import Experiencia
 from Habilidade import Habilidade
 from Vaga import Vaga
-from Interesses import Interesse, StatusInteresseEnum
+from Interesses import Interesse, StatusInteresseEnum, OrigemInteresseEnum
 from dependencias import exigir_empresa
 from notificacoes import enviar_email
 from schemas import (
@@ -238,7 +238,11 @@ def listar_meus_interesses(
     sessao: Session = Depends(obter_sessao),
 ):
     empresa = _obter_empresa_do_usuario(usuario, sessao)
-    return sessao.query(Interesse).filter(Interesse.empresa_id == empresa.id).all()
+    return (
+        sessao.query(Interesse)
+        .filter(Interesse.empresa_id == empresa.id, Interesse.origem == OrigemInteresseEnum.empresa)
+        .all()
+    )
 
 
 @roteador.get("/me/candidaturas", response_model=list[InteresseResposta])
@@ -249,7 +253,7 @@ def listar_candidaturas_recebidas(
     empresa = _obter_empresa_do_usuario(usuario, sessao)
     return (
         sessao.query(Interesse)
-        .filter(Interesse.empresa_id == empresa.id, Interesse.origem == "candidato")
+        .filter(Interesse.empresa_id == empresa.id, Interesse.origem == OrigemInteresseEnum.candidato)
         .all()
     )
 
