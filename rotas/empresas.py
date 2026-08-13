@@ -192,7 +192,15 @@ def enviar_interesse(
     empresa = _obter_empresa_do_usuario(usuario, sessao)
     _exigir_empresa_aprovada(empresa)
 
-    candidato = sessao.query(Candidato).filter(Candidato.id == dados.candidato_id).first()
+    candidato = (
+        sessao.query(Candidato)
+        .filter(
+            Candidato.id == dados.candidato_id,
+            Candidato.aprovado.is_(True),
+            Candidato.visivel_para_empresas.is_(True),
+        )
+        .first()
+    )
     if candidato is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Candidato não encontrado")
 
