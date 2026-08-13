@@ -14,6 +14,7 @@ from Habilidade import Habilidade
 from Vaga import Vaga
 from Interesses import Interesse, StatusInteresseEnum
 from dependencias import exigir_empresa
+from notificacoes import enviar_email
 from schemas import (
     EmpresaAtualizar,
     EmpresaPerfil,
@@ -209,6 +210,17 @@ def enviar_interesse(
     sessao.add(interesse)
     sessao.commit()
     sessao.refresh(interesse)
+
+    enviar_email(
+        destinatario=candidato.usuario.email,
+        assunto="Uma empresa se interessou pelo seu perfil — CadaUm",
+        corpo_html=(
+            f"<p>Olá, {candidato.usuario.nome.split(' ')[0]}!</p>"
+            f"<p>A empresa <b>{empresa.razao_social or empresa.usuario.nome}</b> demonstrou interesse "
+            "no seu perfil. Entre na plataforma pra ver os detalhes e responder.</p>"
+        ),
+    )
+
     return interesse
 
 
