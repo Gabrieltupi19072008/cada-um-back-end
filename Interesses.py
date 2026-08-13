@@ -1,6 +1,6 @@
 # Interesse.py - Tabela que liga empresa ao candidato quando há interesse
 
-from sqlalchemy import Column, Integer, Text, Enum, ForeignKey, TIMESTAMP
+from sqlalchemy import Column, Integer, String, Text, Enum, ForeignKey, TIMESTAMP
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from banco import Base
@@ -24,6 +24,7 @@ class Interesse(Base):
     vaga_id = Column(Integer, ForeignKey("vagas.id"), nullable=True)
     mensagem = Column(Text)
     status = Column(Enum(StatusInteresseEnum), default=StatusInteresseEnum.pendente)
+    origem = Column(String(20), default="empresa", nullable=False)  # "empresa" ou "candidato"
     criado_em = Column(TIMESTAMP, server_default=func.now())
 
     # Relacionamentos
