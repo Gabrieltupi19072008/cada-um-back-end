@@ -253,6 +253,7 @@ class InteresseResposta(BaseModel):
     vaga_id: Optional[int] = None
     mensagem: Optional[str] = None
     status: StatusInteresseEnum
+    origem: str
 
     model_config = {"from_attributes": True}
 
@@ -284,6 +285,7 @@ class InteresseParaCandidato(BaseModel):
     vaga: Optional[VagaResumo] = None
     mensagem: Optional[str] = None
     status: StatusInteresseEnum
+    origem: str
 
     model_config = {"from_attributes": True}
 
