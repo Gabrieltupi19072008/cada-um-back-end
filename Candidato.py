@@ -27,6 +27,11 @@ class Candidato(Base):
     sobre_mim = Column(Text)
     grau_tea = Column(Enum(GrauTeaEnum))
     necessidades_especiais = Column(Text)
+    escolaridade = Column(String(50))
+    cursos_profissionalizantes = Column(Text)
+    bairros_aceitos = Column(String(255))
+    tipos_vinculo = Column(String(60))  # CSV: combinação de efetivo, estagio, menor_aprendiz
+    visivel_para_empresas = Column(Boolean, default=True, nullable=False)
     foto_url = Column(String(255))
     aprovado = Column(Boolean, default=False)
     criado_em = Column(TIMESTAMP, server_default=func.now())
