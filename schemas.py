@@ -319,6 +319,14 @@ class EmpresaAdmin(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class CnpjReceita(BaseModel):
+    encontrado: bool
+    razao_social: Optional[str] = None
+    nome_fantasia: Optional[str] = None
+    situacao_cadastral: Optional[str] = None
+    data_abertura: Optional[str] = None
+
+
 class CandidatoAdmin(BaseModel):
     id: int
     usuario: UsuarioResumo

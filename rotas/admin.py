@@ -14,12 +14,14 @@ from Empresa import Empresa
 from Candidato import Candidato
 from Interesses import Interesse, StatusInteresseEnum
 from dependencias import exigir_admin
+from servicos_externos import consultar_cnpj_receita
 from schemas import (
     UsuarioAdmin,
     EmpresaAdmin,
     CandidatoAdmin,
     CotaEmpresa,
     EstatisticasAdmin,
+    CnpjReceita,
 )
 
 roteador = APIRouter(prefix="/admin", tags=["Admin"])
@@ -70,6 +72,22 @@ def aprovar_empresa(
     sessao.commit()
     sessao.refresh(empresa)
     return empresa
+
+
+@roteador.get("/empresas/{empresa_id}/cnpj-receita", response_model=CnpjReceita)
+def consultar_cnpj_da_empresa(
+    empresa_id: int,
+    admin: Usuario = Depends(exigir_admin),
+    sessao: Session = Depends(obter_sessao),
+):
+    empresa = sessao.query(Empresa).filter(Empresa.id == empresa_id).first()
+    if empresa is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Empresa não encontrada")
+
+    dados = consultar_cnpj_receita(empresa.cnpj)
+    if dados is None:
+        return CnpjReceita(encontrado=False)
+    return CnpjReceita(encontrado=True, **dados)
 
 
 @roteador.put("/empresas/{empresa_id}/reprovar", response_model=EmpresaAdmin)
