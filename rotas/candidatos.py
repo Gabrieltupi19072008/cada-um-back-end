@@ -332,3 +332,16 @@ def candidatar_se_a_vaga(
     sessao.commit()
     sessao.refresh(interesse)
     return interesse
+
+
+@roteador.get("/me/candidaturas", response_model=list[InteresseParaCandidato])
+def listar_minhas_candidaturas(
+    usuario: Usuario = Depends(exigir_candidato),
+    sessao: Session = Depends(obter_sessao),
+):
+    candidato = _obter_candidato_do_usuario(usuario, sessao)
+    return (
+        sessao.query(Interesse)
+        .filter(Interesse.candidato_id == candidato.id, Interesse.origem == OrigemInteresseEnum.candidato)
+        .all()
+    )

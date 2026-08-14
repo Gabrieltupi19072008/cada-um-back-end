@@ -247,17 +247,6 @@ class InteresseCriar(BaseModel):
     mensagem: Optional[str] = None
 
 
-class InteresseResposta(BaseModel):
-    id: int
-    candidato: CandidatoPublico
-    vaga_id: Optional[int] = None
-    mensagem: Optional[str] = None
-    status: StatusInteresseEnum
-    origem: str
-
-    model_config = {"from_attributes": True}
-
-
 class EmpresaResumo(BaseModel):
     id: int
     usuario: UsuarioResumo
@@ -275,6 +264,17 @@ class VagaResumo(BaseModel):
     area: Optional[str] = None
     modalidade: ModalidadeEnum
     tipo_contrato: ContratoEnum
+
+    model_config = {"from_attributes": True}
+
+
+class InteresseResposta(BaseModel):
+    id: int
+    candidato: CandidatoPublico
+    vaga: Optional[VagaResumo] = None
+    mensagem: Optional[str] = None
+    status: StatusInteresseEnum
+    origem: str
 
     model_config = {"from_attributes": True}
 
