@@ -43,8 +43,16 @@ class EsqueciSenhaEntrada(BaseModel):
 
 
 class EsqueciSenhaResposta(BaseModel):
-    encontrado: bool
-    senha_temporaria: Optional[str] = None
+    mensagem: str
+
+
+class RedefinirSenhaEntrada(BaseModel):
+    token: str
+    nova_senha: str
+
+
+class RedefinirSenhaResposta(BaseModel):
+    mensagem: str
 
 
 class UsuarioResumo(BaseModel):

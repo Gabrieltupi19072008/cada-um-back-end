@@ -1,7 +1,6 @@
 # seguranca.py - Funções de autenticação e JWT
 
 import secrets
-import string
 
 from passlib.context import CryptContext
 from jose import JWTError, jwt
@@ -42,7 +41,6 @@ def decodificar_token(token: str):
         return None
 
 
-def gerar_senha_temporaria(tamanho: int = 10) -> str:
-    """Gera uma senha aleatória temporária (usada no fluxo de 'esqueci minha senha')."""
-    alfabeto = string.ascii_letters + string.digits
-    return "".join(secrets.choice(alfabeto) for _ in range(tamanho))
+def gerar_token_redefinicao() -> str:
+    """Gera um token aleatório seguro (usado no link de 'esqueci minha senha')."""
+    return secrets.token_urlsafe(32)

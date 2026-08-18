@@ -22,6 +22,8 @@ class Usuario(Base):
     perfil = Column(Enum(PerfilEnum), nullable=False)
     ativo = Column(Boolean, default=True)
     criado_em = Column(TIMESTAMP, server_default=func.now())
+    reset_token = Column(String(64), unique=True, index=True, nullable=True)
+    reset_token_expira = Column(TIMESTAMP, nullable=True)
 
     # Relacionamentos com outras tabelas
     candidato = relationship("Candidato", back_populates="usuario", uselist=False)
