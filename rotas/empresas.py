@@ -3,6 +3,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from banco import obter_sessao
@@ -10,6 +11,7 @@ from Usuario import Usuario
 from Empresa import Empresa
 from Candidato import Candidato, GrauTeaEnum
 from Experiencia import Experiencia
+from Formacao import Formacao
 from Habilidade import Habilidade
 from Vaga import Vaga
 from Interesses import Interesse, StatusInteresseEnum, OrigemInteresseEnum
@@ -148,17 +150,27 @@ def buscar_candidatos(
         Candidato.aprovado.is_(True), Candidato.visivel_para_empresas.is_(True)
     )
     if cidade:
-        consulta = consulta.filter(Candidato.cidade == cidade)
+        # unaccent() ignora acento (ex: busca "Maceio" encontra cidade "Maceió")
+        consulta = consulta.filter(func.unaccent(Candidato.cidade).ilike(func.unaccent(cidade)))
     if estado:
         consulta = consulta.filter(Candidato.estado == estado)
     if grau_tea:
         consulta = consulta.filter(Candidato.grau_tea == grau_tea)
     if area:
-        consulta = consulta.join(Candidato.experiencias).filter(Experiencia.cargo.ilike(f"%{area}%"))
+        # "Área de atuação" pode estar tanto na formação (curso) quanto na experiência
+        # (cargo) do candidato -- alguém recém-formado pode não ter experiência ainda.
+        padrao = func.unaccent(f"%{area}%")
+        consulta = consulta.filter(
+            or_(
+                Candidato.formacoes.any(func.unaccent(Formacao.curso).ilike(padrao)),
+                Candidato.experiencias.any(func.unaccent(Experiencia.cargo).ilike(padrao)),
+            )
+        )
     if habilidade:
-        consulta = consulta.join(Candidato.habilidades).filter(Habilidade.nome.ilike(f"%{habilidade}%"))
+        padrao_habilidade = func.unaccent(f"%{habilidade}%")
+        consulta = consulta.filter(Candidato.habilidades.any(func.unaccent(Habilidade.nome).ilike(padrao_habilidade)))
 
-    return consulta.distinct().all()
+    return consulta.all()
 
 
 @roteador.get("/candidatos/{candidato_id}", response_model=CandidatoPublico)
