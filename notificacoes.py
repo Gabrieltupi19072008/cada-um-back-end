@@ -1,4 +1,16 @@
-# notificacoes.py - Envio de e-mail transacional (Gmail SMTP, com Resend como alternativa).
+# notificacoes.py - Envio de e-mail transacional.
+#
+# Provedor principal: Brevo, via API HTTPS (nao SMTP). O Render (e varios outros PaaS
+# gratuitos) bloqueia conexoes de saida em portas de SMTP (25/465/587) pra evitar abuso --
+# confirmado em producao (erro "Network is unreachable" tentando Gmail SMTP nas portas 465 e
+# 587). A API do Brevo roda sobre HTTPS normal (porta 443), que nunca e' bloqueada. O Brevo
+# tambem permite verificar um UNICO endereco de e-mail remetente (em vez de exigir um dominio
+# proprio verificado via DNS, como o Resend exige) -- por isso da' pra usar um Gmail comum como
+# remetente.
+#
+# Gmail SMTP e Resend continuam disponiveis como fallback (uteis fora do Render, ou se o Brevo
+# nao estiver configurado), mas SMTP direto NAO funciona nesse hosting -- ver acima.
+#
 # Nunca deve quebrar o fluxo principal do usuario: se nada estiver configurado ou o envio
 # falhar, so' loga.
 
@@ -9,12 +21,17 @@ from concurrent.futures import ThreadPoolExecutor
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+import requests
 import resend
 from dotenv import load_dotenv
 
 load_dotenv()
 
 logger = logging.getLogger("notificacoes")
+
+BREVO_API_KEY = os.getenv("BREVO_API_KEY", "")
+BREVO_REMETENTE_EMAIL = os.getenv("BREVO_REMETENTE_EMAIL", "")
+BREVO_REMETENTE_NOME = os.getenv("BREVO_REMETENTE_NOME", "CadaUm")
 
 GMAIL_USER = os.getenv("GMAIL_USER", "")
 GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "")
@@ -28,6 +45,25 @@ if RESEND_API_KEY:
 # latencia da requisicao HTTP do usuario. Os proprios timeouts do smtplib/socket (abaixo)
 # limitam quanto tempo a thread de fundo fica presa numa tentativa.
 _executor_email = ThreadPoolExecutor(max_workers=4, thread_name_prefix="enviar_email")
+
+
+def _enviar_via_brevo(destinatario: str, assunto: str, corpo_html: str) -> None:
+    resposta = requests.post(
+        "https://api.brevo.com/v3/smtp/email",
+        headers={
+            "api-key": BREVO_API_KEY,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+        json={
+            "sender": {"name": BREVO_REMETENTE_NOME, "email": BREVO_REMETENTE_EMAIL},
+            "to": [{"email": destinatario}],
+            "subject": assunto,
+            "htmlContent": corpo_html,
+        },
+        timeout=8,
+    )
+    resposta.raise_for_status()
 
 
 def _montar_mensagem_gmail(destinatario: str, assunto: str, corpo_html: str) -> MIMEMultipart:
@@ -77,7 +113,9 @@ def _registrar_resultado(destinatario: str, assunto: str, futuro) -> None:
 
 
 def enviar_email(destinatario: str, assunto: str, corpo_html: str) -> None:
-    if GMAIL_USER and GMAIL_APP_PASSWORD:
+    if BREVO_API_KEY and BREVO_REMETENTE_EMAIL:
+        _enviar = lambda: _enviar_via_brevo(destinatario, assunto, corpo_html)
+    elif GMAIL_USER and GMAIL_APP_PASSWORD:
         _enviar = lambda: _enviar_via_gmail(destinatario, assunto, corpo_html)
     elif RESEND_API_KEY:
         _enviar = lambda: _enviar_via_resend(destinatario, assunto, corpo_html)
