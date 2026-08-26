@@ -38,6 +38,8 @@ class Candidato(Base):
     tipos_vinculo = Column(String(60))  # CSV: combinação de efetivo, estagio, menor_aprendiz
     visivel_para_empresas = Column(Boolean, default=True, nullable=False)
     foto_url = Column(String(255))
+    curriculo_arquivo = Column(Text)
+    curriculo_nome_arquivo = Column(String(255))
     aprovado = Column(Boolean, default=False)
     criado_em = Column(TIMESTAMP, server_default=func.now())
 

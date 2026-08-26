@@ -79,6 +79,11 @@ class FotoAtualizar(BaseModel):
     foto_base64: str
 
 
+class CurriculoArquivoCriar(BaseModel):
+    arquivo_base64: str
+    nome_arquivo: str = Field(max_length=255)
+
+
 class CandidatoAtualizar(BaseModel):
     data_nascimento: Optional[date] = None
     cidade: Optional[str] = None
@@ -168,6 +173,7 @@ class CandidatoPerfil(BaseModel):
     bairros_aceitos: Optional[str] = None
     tipos_vinculo: Optional[str] = None
     visivel_para_empresas: bool = True
+    curriculo_nome_arquivo: Optional[str] = None
     experiencias: list[ExperienciaResposta] = []
     habilidades: list[HabilidadeResposta] = []
 
@@ -196,6 +202,7 @@ class CandidatoPublico(BaseModel):
     bairros_aceitos: Optional[str] = None
     tipos_vinculo: Optional[str] = None
     visivel_para_empresas: bool = True
+    curriculo_nome_arquivo: Optional[str] = None
     experiencias: list[ExperienciaResposta] = []
     habilidades: list[HabilidadeResposta] = []
 

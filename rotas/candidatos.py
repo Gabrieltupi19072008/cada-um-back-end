@@ -1,6 +1,6 @@
 # candidatos.py - Rotas de perfil do candidato (dados, formação, experiência, habilidades)
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from typing import Optional
@@ -15,9 +15,11 @@ from Vaga import Vaga, ModalidadeEnum
 from Empresa import Empresa
 from dependencias import exigir_candidato
 from notificacoes import enviar_email
+from utilitarios_arquivo import validar_e_decodificar_curriculo
 from schemas import (
     CandidatoAtualizar,
     CandidatoPerfil,
+    CurriculoArquivoCriar,
     EmpresaPublica,
     ExperienciaCriar,
     ExperienciaResposta,
@@ -61,6 +63,52 @@ def atualizar_meu_perfil(
     sessao.commit()
     sessao.refresh(candidato)
     return candidato
+
+
+@roteador.put("/me/curriculo-arquivo", response_model=CandidatoPerfil)
+def enviar_curriculo_arquivo(
+    dados: CurriculoArquivoCriar,
+    usuario: Usuario = Depends(exigir_candidato),
+    sessao: Session = Depends(obter_sessao),
+):
+    candidato = _obter_candidato_do_usuario(usuario, sessao)
+    validar_e_decodificar_curriculo(dados.arquivo_base64)  # só valida -- guardamos o data URI original
+
+    candidato.curriculo_arquivo = dados.arquivo_base64
+    candidato.curriculo_nome_arquivo = dados.nome_arquivo
+    sessao.commit()
+    sessao.refresh(candidato)
+    return candidato
+
+
+@roteador.delete("/me/curriculo-arquivo", response_model=CandidatoPerfil)
+def remover_curriculo_arquivo(
+    usuario: Usuario = Depends(exigir_candidato),
+    sessao: Session = Depends(obter_sessao),
+):
+    candidato = _obter_candidato_do_usuario(usuario, sessao)
+    candidato.curriculo_arquivo = None
+    candidato.curriculo_nome_arquivo = None
+    sessao.commit()
+    sessao.refresh(candidato)
+    return candidato
+
+
+@roteador.get("/me/curriculo-arquivo")
+def baixar_meu_curriculo_arquivo(
+    usuario: Usuario = Depends(exigir_candidato),
+    sessao: Session = Depends(obter_sessao),
+):
+    candidato = _obter_candidato_do_usuario(usuario, sessao)
+    if not candidato.curriculo_arquivo:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nenhum currículo enviado")
+
+    bruto, mime_tipo = validar_e_decodificar_curriculo(candidato.curriculo_arquivo)
+    return Response(
+        content=bruto,
+        media_type=mime_tipo,
+        headers={"Content-Disposition": f'attachment; filename="{candidato.curriculo_nome_arquivo}"'},
+    )
 
 
 @roteador.post("/me/experiencias", response_model=ExperienciaResposta, status_code=status.HTTP_201_CREATED)

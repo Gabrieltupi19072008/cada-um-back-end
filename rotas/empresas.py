@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
@@ -16,6 +16,7 @@ from Vaga import Vaga
 from Interesses import Interesse, StatusInteresseEnum, OrigemInteresseEnum, TRANSICOES_STATUS_VALIDAS
 from dependencias import exigir_empresa
 from notificacoes import enviar_email
+from utilitarios_arquivo import validar_e_decodificar_curriculo
 from schemas import (
     EmpresaAtualizar,
     EmpresaPerfil,
@@ -193,6 +194,35 @@ def obter_candidato(
     if candidato is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Candidato não encontrado")
     return candidato
+
+
+@roteador.get("/candidatos/{candidato_id}/curriculo-arquivo")
+def baixar_curriculo_do_candidato(
+    candidato_id: int,
+    usuario: Usuario = Depends(exigir_empresa),
+    sessao: Session = Depends(obter_sessao),
+):
+    empresa = _obter_empresa_do_usuario(usuario, sessao)
+    _exigir_empresa_aprovada(empresa)
+
+    candidato = (
+        sessao.query(Candidato)
+        .filter(
+            Candidato.id == candidato_id,
+            Candidato.aprovado.is_(True),
+            Candidato.visivel_para_empresas.is_(True),
+        )
+        .first()
+    )
+    if candidato is None or not candidato.curriculo_arquivo:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Currículo não encontrado")
+
+    bruto, mime_tipo = validar_e_decodificar_curriculo(candidato.curriculo_arquivo)
+    return Response(
+        content=bruto,
+        media_type=mime_tipo,
+        headers={"Content-Disposition": f'attachment; filename="{candidato.curriculo_nome_arquivo}"'},
+    )
 
 
 @roteador.post("/me/interesses", response_model=InteresseResposta, status_code=status.HTTP_201_CREATED)
