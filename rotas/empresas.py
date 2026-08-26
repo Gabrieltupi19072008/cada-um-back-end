@@ -13,7 +13,7 @@ from Candidato import Candidato, GrauTeaEnum
 from Experiencia import Experiencia
 from Habilidade import Habilidade
 from Vaga import Vaga
-from Interesses import Interesse, StatusInteresseEnum, OrigemInteresseEnum
+from Interesses import Interesse, StatusInteresseEnum, OrigemInteresseEnum, TRANSICOES_STATUS_VALIDAS
 from dependencias import exigir_empresa
 from notificacoes import enviar_email
 from schemas import (
@@ -291,10 +291,17 @@ def responder_candidatura(
     if interesse is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Candidatura não encontrada")
 
-    if dados.status not in (StatusInteresseEnum.aceito, StatusInteresseEnum.recusado):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Resposta deve ser 'aceito' ou 'recusado'")
-    if interesse.status in (StatusInteresseEnum.aceito, StatusInteresseEnum.recusado):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Esta candidatura já foi respondida")
+    transicoes_permitidas = TRANSICOES_STATUS_VALIDAS.get(dados.status)
+    if transicoes_permitidas is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Resposta deve ser 'selecionado', 'aceito' ou 'recusado'",
+        )
+    if interesse.status not in transicoes_permitidas:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Não é possível ir de '{interesse.status.value}' para '{dados.status.value}'",
+        )
 
     interesse.status = dados.status
     sessao.commit()
@@ -303,7 +310,13 @@ def responder_candidatura(
     candidato = interesse.candidato
     nome_empresa = empresa.razao_social or empresa.usuario.nome
     vaga_texto = f" para a vaga <b>{interesse.vaga.titulo}</b>" if interesse.vaga else ""
-    if dados.status == StatusInteresseEnum.aceito:
+    if dados.status == StatusInteresseEnum.selecionado:
+        assunto = "Você foi selecionado(a)! — CadaUm"
+        mensagem = (
+            f"A empresa <b>{nome_empresa}</b> selecionou sua candidatura{vaga_texto} pra conversar melhor. "
+            "Entre na plataforma pra ver os detalhes e conversar por lá."
+        )
+    elif dados.status == StatusInteresseEnum.aceito:
         assunto = "Sua candidatura foi aceita — CadaUm"
         mensagem = f"A empresa <b>{nome_empresa}</b> aceitou sua candidatura{vaga_texto}. Entre na plataforma pra ver os detalhes."
     else:

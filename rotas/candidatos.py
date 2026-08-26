@@ -10,10 +10,11 @@ from Usuario import Usuario
 from Candidato import Candidato
 from Experiencia import Experiencia
 from Habilidade import Habilidade
-from Interesses import Interesse, StatusInteresseEnum, OrigemInteresseEnum
+from Interesses import Interesse, StatusInteresseEnum, OrigemInteresseEnum, TRANSICOES_STATUS_VALIDAS
 from Vaga import Vaga, ModalidadeEnum
 from Empresa import Empresa
 from dependencias import exigir_candidato
+from notificacoes import enviar_email
 from schemas import (
     CandidatoAtualizar,
     CandidatoPerfil,
@@ -197,18 +198,44 @@ def responder_interesse(
     if interesse is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Interesse não encontrado")
 
-    if dados.status not in (StatusInteresseEnum.aceito, StatusInteresseEnum.recusado):
+    transicoes_permitidas = TRANSICOES_STATUS_VALIDAS.get(dados.status)
+    if transicoes_permitidas is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Resposta deve ser 'aceito' ou 'recusado'",
+            detail="Resposta deve ser 'selecionado', 'aceito' ou 'recusado'",
         )
-
-    if interesse.status in (StatusInteresseEnum.aceito, StatusInteresseEnum.recusado):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Este interesse já foi respondido")
+    if interesse.status not in transicoes_permitidas:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Não é possível ir de '{interesse.status.value}' para '{dados.status.value}'",
+        )
 
     interesse.status = dados.status
     sessao.commit()
     sessao.refresh(interesse)
+
+    empresa = interesse.empresa
+    nome_candidato = candidato.usuario.nome
+    vaga_texto = f" pra vaga <b>{interesse.vaga.titulo}</b>" if interesse.vaga else ""
+    if dados.status == StatusInteresseEnum.selecionado:
+        assunto = "O candidato te selecionou pra conversar! — CadaUm"
+        mensagem = (
+            f"<b>{nome_candidato}</b> selecionou seu interesse{vaga_texto} pra conversar melhor. "
+            "Entre na plataforma pra ver os detalhes e conversar por lá."
+        )
+    elif dados.status == StatusInteresseEnum.aceito:
+        assunto = "Seu interesse foi aceito — CadaUm"
+        mensagem = f"<b>{nome_candidato}</b> aceitou seu interesse{vaga_texto}. Entre na plataforma pra ver os detalhes."
+    else:
+        assunto = "Atualização sobre seu interesse — CadaUm"
+        mensagem = f"<b>{nome_candidato}</b> não vai seguir com seu interesse{vaga_texto} neste momento."
+
+    enviar_email(
+        destinatario=empresa.usuario.email,
+        assunto=assunto,
+        corpo_html=f"<p>Olá, {empresa.usuario.nome.split(' ')[0]}!</p><p>{mensagem}</p>",
+    )
+
     return interesse
 
 

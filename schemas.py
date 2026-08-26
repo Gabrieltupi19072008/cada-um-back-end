@@ -309,6 +309,21 @@ class InteresseResponder(BaseModel):
     status: StatusInteresseEnum
 
 
+class MensagemCriar(BaseModel):
+    corpo: str = Field(min_length=1, max_length=2000)
+
+
+class MensagemResposta(BaseModel):
+    id: int
+    corpo: str
+    criado_em: datetime
+    remetente_nome: str
+    remetente_foto_url: Optional[str] = None
+    de_mim: bool
+
+    model_config = {"from_attributes": True}
+
+
 class UsuarioAdmin(BaseModel):
     id: int
     nome: str
