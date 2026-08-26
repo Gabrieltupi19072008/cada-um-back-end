@@ -60,8 +60,23 @@ class UsuarioResumo(BaseModel):
     nome: str
     email: str
     ativo: bool
+    foto_url: Optional[str] = None
 
     model_config = {"from_attributes": True}
+
+
+class UsuarioMe(BaseModel):
+    id: int
+    nome: str
+    email: str
+    perfil: str
+    foto_url: Optional[str] = None
+
+    model_config = {"from_attributes": True}
+
+
+class FotoAtualizar(BaseModel):
+    foto_base64: str
 
 
 class CandidatoAtualizar(BaseModel):

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, Enum
+from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, Enum, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from banco import Base
@@ -21,6 +21,7 @@ class Usuario(Base):
     senha_hash = Column(String(255), nullable=False)
     perfil = Column(Enum(PerfilEnum), nullable=False)
     ativo = Column(Boolean, default=True)
+    foto_url = Column(Text)
     criado_em = Column(TIMESTAMP, server_default=func.now())
     reset_token = Column(String(64), unique=True, index=True, nullable=True)
     reset_token_expira = Column(TIMESTAMP, nullable=True)

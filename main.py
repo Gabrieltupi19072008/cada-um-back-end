@@ -9,7 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from banco import obter_sessao
-from rotas import auth, candidatos, empresas, admin
+from rotas import auth, candidatos, empresas, admin, usuarios
 
 load_dotenv()
 
@@ -35,6 +35,7 @@ app.include_router(auth.roteador)
 app.include_router(candidatos.roteador)
 app.include_router(empresas.roteador)
 app.include_router(admin.roteador)
+app.include_router(usuarios.roteador)
 
 
 @app.get("/")
