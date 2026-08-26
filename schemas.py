@@ -85,31 +85,12 @@ class CandidatoAtualizar(BaseModel):
             "pos_graduacao",
         ]
     ] = None
+    instituicao_ensino: Optional[str] = None
+    curso: Optional[str] = None
     cursos_profissionalizantes: Optional[str] = None
     bairros_aceitos: Optional[str] = None
     tipos_vinculo: Optional[str] = None
     visivel_para_empresas: Optional[bool] = None
-
-
-class FormacaoCriar(BaseModel):
-    instituicao: str
-    curso: str
-    nivel: str
-    ano_inicio: Optional[int] = None
-    ano_conclusao: Optional[int] = None
-    em_andamento: bool = False
-
-
-class FormacaoResposta(BaseModel):
-    id: int
-    instituicao: str
-    curso: str
-    nivel: str
-    ano_inicio: Optional[int] = None
-    ano_conclusao: Optional[int] = None
-    em_andamento: bool
-
-    model_config = {"from_attributes": True}
 
 
 class ExperienciaCriar(BaseModel):
@@ -160,11 +141,12 @@ class CandidatoPerfil(BaseModel):
     necessidades_especiais: Optional[str] = None
     foto_url: Optional[str] = None
     escolaridade: Optional[str] = None
+    instituicao_ensino: Optional[str] = None
+    curso: Optional[str] = None
     cursos_profissionalizantes: Optional[str] = None
     bairros_aceitos: Optional[str] = None
     tipos_vinculo: Optional[str] = None
     visivel_para_empresas: bool = True
-    formacoes: list[FormacaoResposta] = []
     experiencias: list[ExperienciaResposta] = []
     habilidades: list[HabilidadeResposta] = []
 
@@ -184,11 +166,12 @@ class CandidatoPublico(BaseModel):
     necessidades_especiais: Optional[str] = None
     foto_url: Optional[str] = None
     escolaridade: Optional[str] = None
+    instituicao_ensino: Optional[str] = None
+    curso: Optional[str] = None
     cursos_profissionalizantes: Optional[str] = None
     bairros_aceitos: Optional[str] = None
     tipos_vinculo: Optional[str] = None
     visivel_para_empresas: bool = True
-    formacoes: list[FormacaoResposta] = []
     experiencias: list[ExperienciaResposta] = []
     habilidades: list[HabilidadeResposta] = []
 

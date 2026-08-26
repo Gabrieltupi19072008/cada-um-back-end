@@ -28,6 +28,8 @@ class Candidato(Base):
     grau_tea = Column(Enum(GrauTeaEnum))
     necessidades_especiais = Column(Text)
     escolaridade = Column(String(50))
+    instituicao_ensino = Column(String(150))
+    curso = Column(String(150))
     cursos_profissionalizantes = Column(Text)
     bairros_aceitos = Column(String(255))
     tipos_vinculo = Column(String(60))  # CSV: combinação de efetivo, estagio, menor_aprendiz
@@ -38,7 +40,6 @@ class Candidato(Base):
 
     # Relacionamentos
     usuario = relationship("Usuario", back_populates="candidato")
-    formacoes = relationship("Formacao", back_populates="candidato", cascade="all, delete")
     experiencias = relationship("Experiencia", back_populates="candidato", cascade="all, delete")
     habilidades = relationship("Habilidade", back_populates="candidato", cascade="all, delete")
     interesses_recebidos = relationship("Interesse", back_populates="candidato", cascade="all, delete")

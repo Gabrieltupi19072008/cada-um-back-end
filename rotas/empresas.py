@@ -11,7 +11,6 @@ from Usuario import Usuario
 from Empresa import Empresa
 from Candidato import Candidato, GrauTeaEnum
 from Experiencia import Experiencia
-from Formacao import Formacao
 from Habilidade import Habilidade
 from Vaga import Vaga
 from Interesses import Interesse, StatusInteresseEnum, OrigemInteresseEnum
@@ -157,12 +156,12 @@ def buscar_candidatos(
     if grau_tea:
         consulta = consulta.filter(Candidato.grau_tea == grau_tea)
     if area:
-        # "Área de atuação" pode estar tanto na formação (curso) quanto na experiência
-        # (cargo) do candidato -- alguém recém-formado pode não ter experiência ainda.
+        # "Área de atuação" pode estar tanto no curso do candidato quanto na experiência
+        # (cargo) -- alguém recém-formado pode não ter experiência cadastrada ainda.
         padrao = func.unaccent(f"%{area}%")
         consulta = consulta.filter(
             or_(
-                Candidato.formacoes.any(func.unaccent(Formacao.curso).ilike(padrao)),
+                func.unaccent(Candidato.curso).ilike(padrao),
                 Candidato.experiencias.any(func.unaccent(Experiencia.cargo).ilike(padrao)),
             )
         )

@@ -8,7 +8,6 @@ from typing import Optional
 from banco import obter_sessao
 from Usuario import Usuario
 from Candidato import Candidato
-from Formacao import Formacao
 from Experiencia import Experiencia
 from Habilidade import Habilidade
 from Interesses import Interesse, StatusInteresseEnum, OrigemInteresseEnum
@@ -18,8 +17,6 @@ from dependencias import exigir_candidato
 from schemas import (
     CandidatoAtualizar,
     CandidatoPerfil,
-    FormacaoCriar,
-    FormacaoResposta,
     ExperienciaCriar,
     ExperienciaResposta,
     HabilidadeCriar,
@@ -62,64 +59,6 @@ def atualizar_meu_perfil(
     sessao.commit()
     sessao.refresh(candidato)
     return candidato
-
-
-@roteador.post("/me/formacoes", response_model=FormacaoResposta, status_code=status.HTTP_201_CREATED)
-def adicionar_formacao(
-    dados: FormacaoCriar,
-    usuario: Usuario = Depends(exigir_candidato),
-    sessao: Session = Depends(obter_sessao),
-):
-    candidato = _obter_candidato_do_usuario(usuario, sessao)
-
-    formacao = Formacao(candidato_id=candidato.id, **dados.model_dump())
-    sessao.add(formacao)
-    sessao.commit()
-    sessao.refresh(formacao)
-    return formacao
-
-
-@roteador.put("/me/formacoes/{formacao_id}", response_model=FormacaoResposta)
-def atualizar_formacao(
-    formacao_id: int,
-    dados: FormacaoCriar,
-    usuario: Usuario = Depends(exigir_candidato),
-    sessao: Session = Depends(obter_sessao),
-):
-    candidato = _obter_candidato_do_usuario(usuario, sessao)
-    formacao = (
-        sessao.query(Formacao)
-        .filter(Formacao.id == formacao_id, Formacao.candidato_id == candidato.id)
-        .first()
-    )
-    if formacao is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Formação não encontrada")
-
-    for campo, valor in dados.model_dump().items():
-        setattr(formacao, campo, valor)
-
-    sessao.commit()
-    sessao.refresh(formacao)
-    return formacao
-
-
-@roteador.delete("/me/formacoes/{formacao_id}", status_code=status.HTTP_204_NO_CONTENT)
-def remover_formacao(
-    formacao_id: int,
-    usuario: Usuario = Depends(exigir_candidato),
-    sessao: Session = Depends(obter_sessao),
-):
-    candidato = _obter_candidato_do_usuario(usuario, sessao)
-    formacao = (
-        sessao.query(Formacao)
-        .filter(Formacao.id == formacao_id, Formacao.candidato_id == candidato.id)
-        .first()
-    )
-    if formacao is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Formação não encontrada")
-
-    sessao.delete(formacao)
-    sessao.commit()
 
 
 @roteador.post("/me/experiencias", response_model=ExperienciaResposta, status_code=status.HTTP_201_CREATED)

@@ -7,7 +7,6 @@ from banco import Base, engine
 import Usuario
 import Candidato
 import Empresa
-import Formacao
 import Experiencia
 import Habilidade
 import Vaga
