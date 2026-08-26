@@ -18,6 +18,7 @@ from notificacoes import enviar_email
 from schemas import (
     CandidatoAtualizar,
     CandidatoPerfil,
+    EmpresaPublica,
     ExperienciaCriar,
     ExperienciaResposta,
     HabilidadeCriar,
@@ -257,6 +258,22 @@ def listar_vagas_disponiveis(
         consulta = consulta.filter(Vaga.modalidade == modalidade)
 
     return consulta.all()
+
+
+@roteador.get("/empresas/{empresa_id}", response_model=EmpresaPublica)
+def obter_empresa(
+    empresa_id: int,
+    usuario: Usuario = Depends(exigir_candidato),
+    sessao: Session = Depends(obter_sessao),
+):
+    empresa = (
+        sessao.query(Empresa)
+        .filter(Empresa.id == empresa_id, Empresa.aprovada.is_(True))
+        .first()
+    )
+    if empresa is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Empresa não encontrada")
+    return empresa
 
 
 @roteador.post("/vagas/{vaga_id}/candidatar", response_model=InteresseResposta, status_code=status.HTTP_201_CREATED)

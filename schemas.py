@@ -273,6 +273,21 @@ class EmpresaResumo(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class EmpresaPublica(BaseModel):
+    """Perfil da empresa como o candidato enxerga (sem CNPJ/meta_cota/aprovada)."""
+
+    id: int
+    usuario: UsuarioResumo
+    razao_social: Optional[str] = None
+    setor: Optional[str] = None
+    cidade: Optional[str] = None
+    estado: Optional[str] = None
+    site: Optional[str] = None
+    descricao: Optional[str] = None
+
+    model_config = {"from_attributes": True}
+
+
 class VagaResumo(BaseModel):
     id: int
     titulo: str
