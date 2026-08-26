@@ -87,6 +87,9 @@ class CandidatoAtualizar(BaseModel):
     ] = None
     instituicao_ensino: Optional[str] = None
     curso: Optional[str] = None
+    curso_ano_inicio: Optional[int] = None
+    curso_ano_conclusao: Optional[int] = None
+    curso_em_andamento: Optional[bool] = None
     cursos_profissionalizantes: Optional[str] = None
     bairros_aceitos: Optional[str] = None
     tipos_vinculo: Optional[str] = None
@@ -143,6 +146,9 @@ class CandidatoPerfil(BaseModel):
     escolaridade: Optional[str] = None
     instituicao_ensino: Optional[str] = None
     curso: Optional[str] = None
+    curso_ano_inicio: Optional[int] = None
+    curso_ano_conclusao: Optional[int] = None
+    curso_em_andamento: Optional[bool] = None
     cursos_profissionalizantes: Optional[str] = None
     bairros_aceitos: Optional[str] = None
     tipos_vinculo: Optional[str] = None
@@ -168,6 +174,9 @@ class CandidatoPublico(BaseModel):
     escolaridade: Optional[str] = None
     instituicao_ensino: Optional[str] = None
     curso: Optional[str] = None
+    curso_ano_inicio: Optional[int] = None
+    curso_ano_conclusao: Optional[int] = None
+    curso_em_andamento: Optional[bool] = None
     cursos_profissionalizantes: Optional[str] = None
     bairros_aceitos: Optional[str] = None
     tipos_vinculo: Optional[str] = None

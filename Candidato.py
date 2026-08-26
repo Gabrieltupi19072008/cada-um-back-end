@@ -30,6 +30,9 @@ class Candidato(Base):
     escolaridade = Column(String(50))
     instituicao_ensino = Column(String(150))
     curso = Column(String(150))
+    curso_ano_inicio = Column(Integer)
+    curso_ano_conclusao = Column(Integer)
+    curso_em_andamento = Column(Boolean, default=False)
     cursos_profissionalizantes = Column(Text)
     bairros_aceitos = Column(String(255))
     tipos_vinculo = Column(String(60))  # CSV: combinação de efetivo, estagio, menor_aprendiz
