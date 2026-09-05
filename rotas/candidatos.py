@@ -247,11 +247,17 @@ def responder_interesse(
     if interesse is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Interesse não encontrado")
 
+    if dados.status == StatusInteresseEnum.aceito:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Quem decide a contratação é a empresa. Você pode aceitar conversar ('selecionado') ou recusar.",
+        )
+
     transicoes_permitidas = TRANSICOES_STATUS_VALIDAS.get(dados.status)
     if transicoes_permitidas is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Resposta deve ser 'selecionado', 'aceito' ou 'recusado'",
+            detail="Resposta deve ser 'selecionado' ou 'recusado'",
         )
     if interesse.status not in transicoes_permitidas:
         raise HTTPException(
@@ -270,11 +276,8 @@ def responder_interesse(
         assunto = "O candidato te selecionou pra conversar! — CadaUm"
         mensagem = (
             f"<b>{nome_candidato}</b> selecionou seu interesse{vaga_texto} pra conversar melhor. "
-            "Entre na plataforma pra ver os detalhes e conversar por lá."
+            "Entre na plataforma pra ver os detalhes, conversar por lá e decidir se quer seguir com a contratação."
         )
-    elif dados.status == StatusInteresseEnum.aceito:
-        assunto = "Seu interesse foi aceito — CadaUm"
-        mensagem = f"<b>{nome_candidato}</b> aceitou seu interesse{vaga_texto}. Entre na plataforma pra ver os detalhes."
     else:
         assunto = "Atualização sobre seu interesse — CadaUm"
         mensagem = f"<b>{nome_candidato}</b> não vai seguir com seu interesse{vaga_texto} neste momento."

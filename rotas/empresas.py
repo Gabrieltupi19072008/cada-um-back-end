@@ -287,6 +287,66 @@ def listar_meus_interesses(
     )
 
 
+@roteador.put("/me/interesses/{interesse_id}", response_model=InteresseResposta)
+def responder_meu_interesse(
+    interesse_id: int,
+    dados: InteresseResponder,
+    usuario: Usuario = Depends(exigir_empresa),
+    sessao: Session = Depends(obter_sessao),
+):
+    """
+    Decisão final de contratação de um interesse que a própria empresa enviou. O candidato só
+    pode aceitar conversar ('selecionado') ou recusar -- quem decide 'aceito' (contratação) é
+    sempre a empresa, depois de já ter conversado com o candidato.
+    """
+    empresa = _obter_empresa_do_usuario(usuario, sessao)
+
+    interesse = (
+        sessao.query(Interesse)
+        .filter(
+            Interesse.id == interesse_id,
+            Interesse.empresa_id == empresa.id,
+            Interesse.origem == OrigemInteresseEnum.empresa,
+        )
+        .first()
+    )
+    if interesse is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Interesse não encontrado")
+
+    if dados.status not in (StatusInteresseEnum.aceito, StatusInteresseEnum.recusado):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Resposta deve ser 'aceito' ou 'recusado'",
+        )
+    if interesse.status != StatusInteresseEnum.selecionado:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Só é possível decidir depois que o candidato aceitar conversar",
+        )
+
+    interesse.status = dados.status
+    sessao.commit()
+    sessao.refresh(interesse)
+
+    candidato = interesse.candidato
+    nome_empresa = empresa.razao_social or empresa.usuario.nome
+    vaga_texto = f" pra vaga <b>{interesse.vaga.titulo}</b>" if interesse.vaga else ""
+    if dados.status == StatusInteresseEnum.aceito:
+        assunto = "Você foi contratado(a)! — CadaUm"
+        mensagem = f"A empresa <b>{nome_empresa}</b> decidiu seguir com sua contratação{vaga_texto}. Entre na plataforma pra ver os detalhes."
+    else:
+        assunto = "Atualização sobre seu interesse — CadaUm"
+        mensagem = f"A empresa <b>{nome_empresa}</b> não vai seguir com o processo{vaga_texto} neste momento."
+
+    enviar_email(
+        destinatario=candidato.usuario.email,
+        assunto=assunto,
+        corpo_html=f"<p>Olá, {candidato.usuario.nome.split(' ')[0]}!</p><p>{mensagem}</p>",
+    )
+
+    return interesse
+
+
 @roteador.get("/me/candidaturas", response_model=list[InteresseResposta])
 def listar_candidaturas_recebidas(
     usuario: Usuario = Depends(exigir_empresa),
