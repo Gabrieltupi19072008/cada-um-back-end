@@ -30,6 +30,7 @@ class EmpresaCadastro(BaseModel):
     setor: Optional[str] = None
     cidade: Optional[str] = None
     estado: Optional[str] = Field(default=None, max_length=2)
+    site: Optional[str] = None
 
 
 class Token(BaseModel):

@@ -96,6 +96,7 @@ def cadastrar_empresa(dados: EmpresaCadastro, sessao: Session = Depends(obter_se
         setor=dados.setor,
         cidade=dados.cidade,
         estado=dados.estado,
+        site=dados.site,
     )
     sessao.add(empresa)
     sessao.commit()
