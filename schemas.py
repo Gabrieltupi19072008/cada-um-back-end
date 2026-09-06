@@ -216,6 +216,7 @@ class EmpresaAtualizar(BaseModel):
     estado: Optional[str] = Field(default=None, max_length=2)
     site: Optional[str] = None
     descricao: Optional[str] = None
+    total_funcionarios: Optional[int] = Field(default=None, ge=0)
 
 
 class EmpresaPerfil(BaseModel):
@@ -228,7 +229,7 @@ class EmpresaPerfil(BaseModel):
     estado: Optional[str] = None
     site: Optional[str] = None
     descricao: Optional[str] = None
-    meta_cota: int
+    total_funcionarios: Optional[int] = None
     aprovada: bool
 
     model_config = {"from_attributes": True}
@@ -393,17 +394,21 @@ class CandidatoAdmin(BaseModel):
 
 
 class CotaResposta(BaseModel):
-    meta_cota: int
+    total_funcionarios: Optional[int] = None
+    percentual_legal: float
+    vagas_necessarias: int
     aceitos: int
-    percentual: float
+    percentual_cumprido: float
 
 
 class CotaEmpresa(BaseModel):
     empresa_id: int
     razao_social: Optional[str] = None
-    meta_cota: int
+    total_funcionarios: Optional[int] = None
+    percentual_legal: float
+    vagas_necessarias: int
     aceitos: int
-    percentual: float
+    percentual_cumprido: float
 
 
 class EstatisticasAdmin(BaseModel):

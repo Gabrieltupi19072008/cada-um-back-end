@@ -15,6 +15,7 @@ from Habilidade import Habilidade
 from Vaga import Vaga
 from Interesses import Interesse, StatusInteresseEnum, OrigemInteresseEnum, TRANSICOES_STATUS_VALIDAS
 from dependencias import exigir_empresa
+from lei_cotas import calcular_cota_legal
 from notificacoes import enviar_email
 from utilitarios_arquivo import validar_e_decodificar_curriculo
 from schemas import (
@@ -427,7 +428,8 @@ def obter_minha_cota(
     usuario: Usuario = Depends(exigir_empresa),
     sessao: Session = Depends(obter_sessao),
 ):
-    """Cota = quantos interesses 'aceitos' a empresa já teve frente à meta que ela mesma definiu (meta_cota)."""
+    """Cota legal de PcD (Art. 93 da Lei nº 8.213/91), calculada a partir do total de
+    empregados que a empresa informou, comparada com quantos interesses ela já teve 'aceitos'."""
     empresa = _obter_empresa_do_usuario(usuario, sessao)
 
     aceitos = (
@@ -436,8 +438,16 @@ def obter_minha_cota(
         .count()
     )
 
-    percentual = 0.0
-    if empresa.meta_cota > 0:
-        percentual = min(100.0, round(aceitos / empresa.meta_cota * 100, 1))
+    percentual_legal, vagas_necessarias = calcular_cota_legal(empresa.total_funcionarios)
 
-    return CotaResposta(meta_cota=empresa.meta_cota, aceitos=aceitos, percentual=percentual)
+    percentual_cumprido = 0.0
+    if vagas_necessarias > 0:
+        percentual_cumprido = min(100.0, round(aceitos / vagas_necessarias * 100, 1))
+
+    return CotaResposta(
+        total_funcionarios=empresa.total_funcionarios,
+        percentual_legal=percentual_legal,
+        vagas_necessarias=vagas_necessarias,
+        aceitos=aceitos,
+        percentual_cumprido=percentual_cumprido,
+    )

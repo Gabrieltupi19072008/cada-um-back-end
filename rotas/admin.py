@@ -14,6 +14,7 @@ from Empresa import Empresa
 from Candidato import Candidato
 from Interesses import Interesse, StatusInteresseEnum
 from dependencias import exigir_admin
+from lei_cotas import calcular_cota_legal
 from servicos_externos import consultar_cnpj_receita
 from schemas import (
     UsuarioAdmin,
@@ -33,16 +34,20 @@ def _calcular_cota(empresa: Empresa, sessao: Session) -> CotaEmpresa:
         .filter(Interesse.empresa_id == empresa.id, Interesse.status == StatusInteresseEnum.aceito)
         .count()
     )
-    percentual = 0.0
-    if empresa.meta_cota > 0:
-        percentual = min(100.0, round(aceitos / empresa.meta_cota * 100, 1))
+    percentual_legal, vagas_necessarias = calcular_cota_legal(empresa.total_funcionarios)
+
+    percentual_cumprido = 0.0
+    if vagas_necessarias > 0:
+        percentual_cumprido = min(100.0, round(aceitos / vagas_necessarias * 100, 1))
 
     return CotaEmpresa(
         empresa_id=empresa.id,
         razao_social=empresa.razao_social,
-        meta_cota=empresa.meta_cota,
+        total_funcionarios=empresa.total_funcionarios,
+        percentual_legal=percentual_legal,
+        vagas_necessarias=vagas_necessarias,
         aceitos=aceitos,
-        percentual=percentual,
+        percentual_cumprido=percentual_cumprido,
     )
 
 
@@ -203,9 +208,21 @@ def exportar_relatorio_cota(
 
     buffer = io.StringIO()
     escritor = csv.writer(buffer)
-    escritor.writerow(["empresa_id", "razao_social", "meta_cota", "aceitos", "percentual"])
+    escritor.writerow(
+        ["empresa_id", "razao_social", "total_funcionarios", "percentual_legal", "vagas_necessarias", "aceitos", "percentual_cumprido"]
+    )
     for cota in cotas:
-        escritor.writerow([cota.empresa_id, cota.razao_social, cota.meta_cota, cota.aceitos, cota.percentual])
+        escritor.writerow(
+            [
+                cota.empresa_id,
+                cota.razao_social,
+                cota.total_funcionarios,
+                cota.percentual_legal,
+                cota.vagas_necessarias,
+                cota.aceitos,
+                cota.percentual_cumprido,
+            ]
+        )
     buffer.seek(0)
 
     return StreamingResponse(
@@ -225,7 +242,13 @@ def estatisticas(
 
     empresas_aprovadas = sessao.query(Empresa).filter(Empresa.aprovada.is_(True)).all()
     cotas = [_calcular_cota(empresa, sessao) for empresa in empresas_aprovadas]
-    cota_media = round(sum(c.percentual for c in cotas) / len(cotas), 1) if cotas else 0.0
+    # Só entra na média quem de fato tem cota exigida por lei (empresas isentas não contam).
+    cotas_sujeitas_a_lei = [c for c in cotas if c.vagas_necessarias > 0]
+    cota_media = (
+        round(sum(c.percentual_cumprido for c in cotas_sujeitas_a_lei) / len(cotas_sujeitas_a_lei), 1)
+        if cotas_sujeitas_a_lei
+        else 0.0
+    )
 
     empresas_pendentes = sessao.query(Empresa).filter(Empresa.aprovada.is_(False)).count()
     candidatos_pendentes = sessao.query(Candidato).filter(Candidato.aprovado.is_(False)).count()

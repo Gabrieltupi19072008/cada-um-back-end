@@ -19,7 +19,7 @@ class Empresa(Base):
     estado = Column(String(2))
     site = Column(String(200))
     descricao = Column(Text)
-    meta_cota = Column(Integer, default=0)
+    total_funcionarios = Column(Integer)
     aprovada = Column(Boolean, default=False)
     criado_em = Column(TIMESTAMP, server_default=func.now())
 
